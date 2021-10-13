@@ -1,4 +1,4 @@
-"""Define a dymamical system for TurtleBot3"""
+"""Define a dymamical system for Dubins Car"""
 from typing import Tuple, Optional, List
 
 import torch
@@ -8,10 +8,10 @@ from .control_affine_system import ControlAffineSystem
 from neural_clbf.systems.utils import Scenario, ScenarioList
 
 
-class TurtleBot(ControlAffineSystem):
+class DubinsCar(ControlAffineSystem):
     """
-    Represents a two wheeled differential drive robot, the TurtleBot3.
-    The system has state
+    Represents a first-order Dubins car, modelling a two wheeled differential drive robot,
+    like the Turtlebot3. The system has state
         p = [x, y, theta]
     representing the x and y position and angle of orientation of the robot,
     and it has control inputs
@@ -42,7 +42,7 @@ class TurtleBot(ControlAffineSystem):
         scenarios: Optional[ScenarioList] = None,
     ):
         """
-        Initialize the inverted pendulum.
+        Initialize the Dubins car.
         args:
             nominal_params: a dictionary giving the parameter values for the system.
                             Requires keys ["R", "L"]
@@ -80,15 +80,15 @@ class TurtleBot(ControlAffineSystem):
 
     @property
     def n_dims(self) -> int:
-        return TurtleBot.N_DIMS
+        return DubinsCar.N_DIMS
 
     @property
     def angle_dims(self) -> List[int]:
-        return [TurtleBot.THETA]
+        return [DubinsCar.THETA]
 
     @property
     def n_controls(self) -> int:
-        return TurtleBot.N_CONTROLS
+        return DubinsCar.N_CONTROLS
 
     @property
     def state_limits(self) -> Tuple[torch.Tensor, torch.Tensor]:
@@ -98,9 +98,9 @@ class TurtleBot(ControlAffineSystem):
         """
         # define upper and lower limits based around the nominal equilibrium input
         upper_limit = torch.ones(self.n_dims)
-        upper_limit[TurtleBot.X] = 2.0
-        upper_limit[TurtleBot.Y] = 2.0
-        upper_limit[TurtleBot.THETA] = np.pi
+        upper_limit[DubinsCar.X] = 2.0
+        upper_limit[DubinsCar.Y] = 2.0
+        upper_limit[DubinsCar.THETA] = np.pi
 
         lower_limit = -1.0 * upper_limit
 
@@ -116,8 +116,8 @@ class TurtleBot(ControlAffineSystem):
         # TODO @bethlow these are relaxed for now, but eventually
         # these values should be measured on the hardware.
         upper_limit = torch.ones(self.n_controls)
-        upper_limit[TurtleBot.V] = 100 * 10.0
-        upper_limit[TurtleBot.THETA_DOT] = 4.0 * np.pi
+        upper_limit[DubinsCar.V] = 100 * 10.0
+        upper_limit[DubinsCar.THETA_DOT] = 4.0 * np.pi
         lower_limit = -1.0 * upper_limit
 
         return (upper_limit, lower_limit)
@@ -165,11 +165,11 @@ class TurtleBot(ControlAffineSystem):
         f = f.type_as(x)
 
         # f is a zero vector as nothing should happen when no control input is given
-        f[:, TurtleBot.X, 0] = 0
+        f[:, DubinsCar.X, 0] = 0
 
-        f[:, TurtleBot.Y, 0] = 0
+        f[:, DubinsCar.Y, 0] = 0
 
-        f[:, TurtleBot.THETA, 0] = 0
+        f[:, DubinsCar.THETA, 0] = 0
 
         return f
 
@@ -189,16 +189,16 @@ class TurtleBot(ControlAffineSystem):
         g = g.type_as(x)
 
         # Extract state variables
-        theta = x[:, TurtleBot.THETA]
+        theta = x[:, DubinsCar.THETA]
 
         # Effect on x
-        g[:, TurtleBot.X, TurtleBot.V] = torch.cos(theta)
+        g[:, DubinsCar.X, DubinsCar.V] = torch.cos(theta)
 
         # Effect on y
-        g[:, TurtleBot.Y, TurtleBot.V] = torch.sin(theta)
+        g[:, DubinsCar.Y, DubinsCar.V] = torch.sin(theta)
 
         # Effect on theta
-        g[:, TurtleBot.THETA, TurtleBot.THETA_DOT] = 1.0
+        g[:, DubinsCar.THETA, DubinsCar.THETA_DOT] = 1.0
 
         return g
 
@@ -214,28 +214,28 @@ class TurtleBot(ControlAffineSystem):
         returns:
             u_nominal: bs x self.n_controls tensor of controls
         """
-        # The turtlebot linearization is not well-behaved, so we create our own
+        # The DubinsCar linearization is not well-behaved, so we create our own
         # P and K matrices (mainly as placeholders)
         self.P = torch.eye(self.n_dims)
         self.K = torch.zeros(self.n_controls, self.n_dims)
 
         # This controller should navigate us towards the origin. We can do this by
         # setting a velocity proportional to the inner product of the vector
-        # from the turtlebot to the origin and the vector pointing out in front of
-        # the turtlebot. If the bot is pointing away from the origin, this inner product
+        # from the DubinsCar to the origin and the vector pointing out in front of
+        # the DubinsCar. If the bot is pointing away from the origin, this inner product
         # will be negative, so we'll drive backwards towards the goal. If the bot
         # is pointing towards the origin, it will drive forwards.
         u = torch.zeros(x.shape[0], self.n_controls).type_as(x)
 
         v_scaling = 1.0
-        bot_to_origin = -x[:, : TurtleBot.Y + 1].reshape(-1, 1, 2)
-        theta = x[:, TurtleBot.THETA]
+        bot_to_origin = -x[:, : DubinsCar.Y + 1].reshape(-1, 1, 2)
+        theta = x[:, DubinsCar.THETA]
         bot_facing = torch.stack((torch.cos(theta), torch.sin(theta))).T.unsqueeze(-1)
-        u[:, TurtleBot.V] = v_scaling * torch.bmm(bot_to_origin, bot_facing).squeeze()
+        u[:, DubinsCar.V] = v_scaling * torch.bmm(bot_to_origin, bot_facing).squeeze()
 
         # In addition to setting the velocity towards the origin, we also need to steer
         # towards the origin. We can do this via P control on the angle between the
-        # turtlebot and the vector to the origin.
+        # DubinsCar and the vector to the origin.
         #
         # However, this angle becomes ill-defined as the bot approaches the origin, so
         # so we switch this term off if the bot is too close (and instead just control
@@ -243,7 +243,7 @@ class TurtleBot(ControlAffineSystem):
         phi_control_on = bot_to_origin.norm(dim=-1) >= 0.02
         phi_control_on = phi_control_on.reshape(-1)
         omega_scaling = 5.0
-        angle_from_origin_to_bot = torch.atan2(x[:, TurtleBot.Y], x[:, TurtleBot.X])
+        angle_from_origin_to_bot = torch.atan2(x[:, DubinsCar.Y], x[:, DubinsCar.X])
         phi = theta - angle_from_origin_to_bot
         # First, wrap the angle error into [-pi, pi]
         phi = torch.atan2(torch.sin(phi), torch.cos(phi))
@@ -255,8 +255,8 @@ class TurtleBot(ControlAffineSystem):
 
         # Only apply this P control when the bot is far enough from the origin;
         # default to P control on theta
-        u[:, TurtleBot.THETA_DOT] = -omega_scaling * theta
-        u[phi_control_on, TurtleBot.THETA_DOT] = -omega_scaling * phi[phi_control_on]
+        u[:, DubinsCar.THETA_DOT] = -omega_scaling * theta
+        u[phi_control_on, DubinsCar.THETA_DOT] = -omega_scaling * phi[phi_control_on]
 
         # Clamp given the control limits
         u_upper, u_lower = self.control_limits

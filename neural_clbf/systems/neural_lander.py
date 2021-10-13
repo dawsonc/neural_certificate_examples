@@ -76,7 +76,7 @@ class NeuralLander(ControlAffineSystem):
         controller_dt: Optional[float] = None,
     ):
         """
-        Initialize the quadrotor.
+        Initialize the neural lander.
 
         args:
             nominal_params: a dictionary giving the parameter values for the system.
