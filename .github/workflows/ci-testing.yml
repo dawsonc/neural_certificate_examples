@@ -62,7 +62,7 @@ jobs:
 
     - name: Tests
       run: |
-        coverage run --source neural_clbf -m py.test neural_clbf -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
+        coverage run --source neural_certificate_examples -m py.test neural_certificate_examples -v --junitxml=junit/test-results-${{ runner.os }}-${{ matrix.python-version }}.xml
 
     - name: Statistics
       if: success()

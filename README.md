@@ -28,7 +28,7 @@ pip install -e .
 pip install -r requirements.txt
 ```
 
-Once installed, training examples can be run using e.g. `python neural_clbf/training/train_clf.py`, and pre-trained models can be evaluated using the scripts in the `neural_clbf/evaluation` directory.
+Once installed, training examples can be run using e.g. `python neural_certificate_examples/training/train_clf.py`, and pre-trained models can be evaluated using the scripts in the `neural_certificate_examples/evaluation` directory.
 
 ### Citation
 Until further notice, if you use this code in your own research, we ask that you cite our publication on this topic:
