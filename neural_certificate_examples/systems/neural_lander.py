@@ -191,7 +191,7 @@ class NeuralLander(ControlAffineSystem):
         goal_mask = torch.ones_like(x[:, 0], dtype=torch.bool)
 
         # Define the goal region as being near the goal
-        near_goal = x.norm(dim=-1) <= 0.2
+        near_goal = x.norm(dim=-1) <= 0.3
         goal_mask.logical_and_(near_goal)
 
         # The goal set has to be a subset of the safe set
