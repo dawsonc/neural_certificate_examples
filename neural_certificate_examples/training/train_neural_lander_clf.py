@@ -55,7 +55,7 @@ def main(args):
         initial_conditions,
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
-        fixed_samples=500000,
+        fixed_samples=1000000,
         max_points=10000,
         val_split=0.1,
         batch_size=64,
