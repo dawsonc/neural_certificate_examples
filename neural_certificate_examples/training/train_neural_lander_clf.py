@@ -95,7 +95,7 @@ def main(args):
         clf_hidden_size=64,
         clf_lambda=1.0,
         controller_period=controller_period,
-        clf_relaxation_penalty=1e3,
+        clf_relaxation_penalty=1e5,
         primal_learning_rate=1e-3,
     )
 
