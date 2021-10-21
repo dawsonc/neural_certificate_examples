@@ -188,7 +188,7 @@ class NeuralCLFController(pl.LightningModule, CLFController):
         P = torch.eye(self.dynamics_model.n_dims)
         P = P.reshape(1, self.dynamics_model.n_dims, self.dynamics_model.n_dims)
         x_goal = self.dynamics_model.goal_point.type_as(x)
-        V = V + 0.5 * F.bilinear(x - x_goal, x - x_goal, P).squeeze()
+        V = V + 0.5 * F.bilinear(x - x_goal, x - x_goal, P)
         P = P.reshape(self.dynamics_model.n_dims, self.dynamics_model.n_dims)
         JV = JV + F.linear(x - x_goal, P).reshape(
             x.shape[0], 1, self.dynamics_model.n_dims
