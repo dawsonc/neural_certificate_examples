@@ -119,7 +119,7 @@ class NeuralCLFController(pl.LightningModule, CLFController):
             )
             if i < self.clf_hidden_layers - 1:
                 self.V_layers[f"layer_{i}_activation"] = nn.Tanh()
-        # self.V_layers["output_linear"] = nn.Linear(self.clf_hidden_size, 1)
+        self.V_layers["output_linear"] = nn.Linear(self.clf_hidden_size, 1)
         self.V_nn = nn.Sequential(self.V_layers)
 
     def prepare_data(self):
@@ -179,9 +179,9 @@ class NeuralCLFController(pl.LightningModule, CLFController):
             elif isinstance(layer, nn.ReLU):
                 JV = torch.matmul(torch.diag_embed(torch.sign(V)), JV)
 
-        # Compute the final activation
-        JV = torch.bmm(V.unsqueeze(1), JV)
-        V = 0.5 * (V * V).sum(dim=1)
+        # # Compute the final activation
+        # JV = torch.bmm(V.unsqueeze(1), JV)
+        # V = 0.5 * (V * V).sum(dim=1)
 
         # Add the nominal CLF
         P = self.dynamics_model.P.type_as(x)
