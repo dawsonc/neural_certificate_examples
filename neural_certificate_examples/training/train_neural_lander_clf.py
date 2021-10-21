@@ -22,7 +22,7 @@ from neural_certificate_examples.training.utils import current_git_hash
 torch.multiprocessing.set_sharing_strategy("file_system")
 
 batch_size = 64
-controller_period = 0.01
+controller_period = 0.001
 
 start_x = torch.tensor(
     [
@@ -95,7 +95,7 @@ def main(args):
         clf_hidden_size=64,
         clf_lambda=1.0,
         controller_period=controller_period,
-        clf_relaxation_penalty=1e5,
+        clf_relaxation_penalty=1e3,
         primal_learning_rate=1e-3,
     )
 

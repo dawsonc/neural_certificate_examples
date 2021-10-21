@@ -234,7 +234,7 @@ class NeuralCLFController(pl.LightningModule, CLFController):
 
         #   1.) V = 0 at the goal
         V_goal = self.V(self.dynamics_model.goal_point)
-        loss.append(("CLF goal term", (V_goal ** 2).sum()))
+        loss.append(("CLF goal term", 1e2 * (V_goal ** 2).sum()))
 
         #   2.) V > 0 elsewhere
         psd_violation = F.relu(eps - V)
