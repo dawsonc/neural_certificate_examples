@@ -44,7 +44,7 @@ def main(args):
     initial_conditions = [
         (-1.0, 1.0),  # x
         (-1.0, 1.0),  # y
-        (-0.1, 1.0),  # z
+        (-0.2, 1.0),  # z
         (-2.0, 2.0),  # vx
         (-2.0, 2.0),  # vy
         (-2.0, 2.0),  # vz
@@ -54,7 +54,7 @@ def main(args):
         initial_conditions,
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
-        fixed_samples=100000,
+        fixed_samples=1000,
         max_points=10000,
         val_split=0.1,
         batch_size=64,
@@ -64,13 +64,13 @@ def main(args):
     # Define the experiment suite
     V_contour_experiment = CLFContourExperiment(
         "V_Contour",
-        domain=[(-2.0, 2.0), (-2.0, 2.0)],
+        domain=[(-1.0, 1.0), (-0.2, 1.0)],
         n_grid=20,
         x_axis_index=NeuralLander.PX,
         y_axis_index=NeuralLander.PZ,
         x_axis_label="$x$",
         y_axis_label="$z$",
-        plot_unsafe_region=False,
+        plot_unsafe_region=True,
     )
     rollout_experiment = RolloutTimeSeriesExperiment(
         "Rollout",
@@ -94,6 +94,7 @@ def main(args):
         clbf_hidden_layers=2,
         clbf_hidden_size=64,
         clf_lambda=1.0,
+        safe_level=1.0,
         controller_period=controller_period,
         clf_relaxation_penalty=1e3,
         primal_learning_rate=1e-3,
