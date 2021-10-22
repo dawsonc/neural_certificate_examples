@@ -86,13 +86,13 @@ def main(args):
     experiment_suite = ExperimentSuite([V_contour_experiment, rollout_experiment])
 
     # Initialize the controller
-    clf_controller = NeuralCLFController(
+    clf_controller = NeuralCLBFController(
         dynamics_model,
         scenarios,
         data_module,
         experiment_suite=experiment_suite,
-        clf_hidden_layers=2,
-        clf_hidden_size=64,
+        clbf_hidden_layers=2,
+        clbf_hidden_size=64,
         clf_lambda=1.0,
         controller_period=controller_period,
         clf_relaxation_penalty=1e3,
