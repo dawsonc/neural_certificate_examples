@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 import numpy as np
 
-from neural_certificate_examples.controllers import NeuralCLFController
+from neural_certificate_examples.controllers import NeuralCLBFController
 from neural_certificate_examples.datamodules.episodic_datamodule import (
     EpisodicDataModule,
 )
@@ -54,7 +54,7 @@ def main(args):
         initial_conditions,
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
-        fixed_samples=100000,
+        fixed_samples=1000,
         max_points=10000,
         val_split=0.1,
         batch_size=64,
