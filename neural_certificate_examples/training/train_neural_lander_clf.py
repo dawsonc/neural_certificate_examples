@@ -94,7 +94,7 @@ def main(args):
         clbf_hidden_layers=2,
         clbf_hidden_size=64,
         clf_lambda=1.0,
-        safe_level=1.0,
+        safe_level=5.0,
         controller_period=controller_period,
         clf_relaxation_penalty=1e3,
         primal_learning_rate=1e-3,
