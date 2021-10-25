@@ -156,10 +156,11 @@ class NeuralLander(ControlAffineSystem):
         safe_mask = torch.ones_like(x[:, 0], dtype=torch.bool)
 
         # We have a floor that we need to avoid and a radius we need to stay inside of
-        safe_z = 0.0
-        safe_radius = 1
+        safe_z = -0.05
+        safe_radius = 3
         safe_mask = torch.logical_and(
-            x[:, NeuralLander.PZ] >= safe_z, x.norm(dim=-1) <= safe_radius
+            x[:, NeuralLander.PZ] >= safe_z,
+            x[:, : NeuralLander.PZ + 1].norm(dim=-1) <= safe_radius,
         )
 
         return safe_mask
@@ -173,10 +174,11 @@ class NeuralLander(ControlAffineSystem):
         unsafe_mask = torch.zeros_like(x[:, 0], dtype=torch.bool)
 
         # We have a floor that we need to avoid and a radius we need to stay inside of
-        unsafe_z = -0.1
-        unsafe_radius = 1.5
+        unsafe_z = -0.2
+        unsafe_radius = 3.5
         unsafe_mask = torch.logical_or(
-            x[:, NeuralLander.PZ] <= unsafe_z, x.norm(dim=-1) >= unsafe_radius
+            x[:, NeuralLander.PZ] <= unsafe_z,
+            x[:, : NeuralLander.PZ + 1].norm(dim=-1) >= unsafe_radius,
         )
 
         return unsafe_mask
