@@ -26,7 +26,7 @@ controller_period = 0.01
 
 start_x = torch.tensor(
     [
-        [0.5, 0.5, 0.5, 0.0, 0.0, 0.0],
+        [0.0, 0.0, 0.5, 0.0, 0.0, 0.0],
     ]
 )
 simulation_dt = 0.001
@@ -44,7 +44,7 @@ def main(args):
     initial_conditions = [
         (-5.0, 5.0),  # x
         (-5.0, 5.0),  # y
-        (-0.5, 2.0),  # z
+        (-0.5, 5.0),  # z
         (-1.0, 1.0),  # vx
         (-1.0, 1.0),  # vy
         (-1.0, 1.0),  # vz
@@ -55,9 +55,9 @@ def main(args):
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
         fixed_samples=300000,
-        max_points=10000,
+        max_points=300000,
         val_split=0.1,
-        batch_size=64,
+        batch_size=1024,
         quotas={"safe": 0.2, "unsafe": 0.2, "goal": 0.4},
     )
 
@@ -91,7 +91,7 @@ def main(args):
         scenarios,
         data_module,
         experiment_suite=experiment_suite,
-        clbf_hidden_layers=2,
+        clbf_hidden_layers=1,
         clbf_hidden_size=64,
         clf_lambda=0.1,
         safe_level=5.0,
