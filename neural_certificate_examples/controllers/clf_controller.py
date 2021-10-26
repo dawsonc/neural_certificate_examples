@@ -266,10 +266,13 @@ class CLFController(Controller):
             # Define the cost
             Q = np.eye(n_controls)
             u_ref_np = u_ref[batch_idx, :].detach().cpu().numpy()
-            objective = u @ Q @ u - 2 * u_ref_np @ Q @ u + u_ref_np @ Q @ u_ref_np
+            objective = (u - u_ref_np) @ Q @ (u - u_ref_np)
+            # objective = u @ Q @ u - 2 * u_ref_np @ Q @ u + u_ref_np @ Q @ u_ref_np
             if allow_relaxation:
-                relax_penalties = relaxation_penalty * np.ones(n_scenarios)
-                objective += relax_penalties @ r
+                # relax_penalties = relaxation_penalty * np.ones(n_scenarios)
+                # objective += relax_penalties @ r
+                relax_penalties = relaxation_penalty * np.eye(n_scenarios)
+                objective += r @ relax_penalties @ r
 
             # Now build the CLF constraints
             for i in range(n_scenarios):

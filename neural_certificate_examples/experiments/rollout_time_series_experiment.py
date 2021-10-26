@@ -184,6 +184,18 @@ class RolloutTimeSeriesExperiment(Experiment):
                     log_packet["value"] = V
                     results_df = results_df.append(log_packet, ignore_index=True)
 
+                # If this controller supports querying getting the relaxation, save that
+                if tstep % controller_update_freq == 0 and hasattr(
+                    controller_under_test, "solve_CLF_QP"
+                ):
+                    _, r = controller_under_test.solve_CLF_QP(x)  # type: ignore
+                    r = r.mean().cpu().numpy().item()
+
+                    log_packet = copy(base_log_packet)
+                    log_packet["measurement"] = "QP relaxation"
+                    log_packet["value"] = r
+                    results_df = results_df.append(log_packet, ignore_index=True)
+
             # Simulate forward using the dynamics
             for i in range(n_sims):
                 xdot = controller_under_test.dynamics_model.closed_loop_dynamics(
@@ -215,10 +227,15 @@ class RolloutTimeSeriesExperiment(Experiment):
         # Set the color scheme
         sns.set_theme(context="talk", style="white")
 
-        # Plot the state and control trajectories (and V, if it's present)
+        # Plot the state and control trajectories (and V and r, if present)
         plot_V = "V" in results_df.measurement.values
+        plot_r = "QP relaxation" in results_df.measurement.values
         num_plots = len(self.plot_x_indices) + len(self.plot_u_indices)
         if plot_V:
+            V_idx = num_plots
+            num_plots += 1
+        if plot_r:
+            r_idx = num_plots
             num_plots += 1
 
         fig, axs = plt.subplots(num_plots, 1)
@@ -246,14 +263,24 @@ class RolloutTimeSeriesExperiment(Experiment):
             # Clear the x label since the plots are stacked
             ax.set_xlabel("")
 
-        # Finally, V (if available)
+        # Finally, V and r (if available)
         if plot_V:
-            ax = axs[-1]
+            ax = axs[V_idx]
             V_mask = results_df["measurement"] == "V"
             sns.lineplot(
                 ax=ax, x="t", y="value", hue="Parameters", data=results_df[V_mask]
             )
             ax.set_ylabel("$V$")
+            # Clear the x label since the plots are stacked
+            ax.set_xlabel("")
+
+        if plot_r:
+            ax = axs[r_idx]
+            r_mask = results_df["measurement"] == "QP relaxation"
+            sns.lineplot(
+                ax=ax, x="t", y="value", hue="Parameters", data=results_df[r_mask]
+            )
+            ax.set_ylabel("QP relaxation")
             # Clear the x label since the plots are stacked
             ax.set_xlabel("")
 

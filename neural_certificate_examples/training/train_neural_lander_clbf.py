@@ -92,12 +92,13 @@ def main(args):
         data_module,
         experiment_suite=experiment_suite,
         clbf_hidden_layers=1,
-        clbf_hidden_size=64,
+        clbf_hidden_size=48,
         clf_lambda=0.1,
-        safe_level=5.0,
+        safe_level=10.0,
         controller_period=controller_period,
-        clf_relaxation_penalty=1e2,
+        clf_relaxation_penalty=10.0,
         primal_learning_rate=1e-3,
+        initial_loss_weight=0.0,
     )
 
     # Initialize the logger and trainer
