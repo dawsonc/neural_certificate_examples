@@ -360,7 +360,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         # The initial losses should decrease exponentially to zero, based on the epoch
         epoch_count = max(self.current_epoch - self.num_init_epochs, 0)
-        decrease_factor = 0.8 ** epoch_count
+        decrease_factor = self.initial_loss_weight * 0.8 ** epoch_count
 
         #   1.) Compare the CLBF to the nominal solution
         # Get the learned CLBF
@@ -386,7 +386,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         # Compute the losses
         component_losses = {}
-        component_losses.update(self.initial_loss_weight * self.initial_loss(x))
+        component_losses.update(self.initial_loss(x))
         component_losses.update(
             self.boundary_loss(x, goal_mask, safe_mask, unsafe_mask)
         )
