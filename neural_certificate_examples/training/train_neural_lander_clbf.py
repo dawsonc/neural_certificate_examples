@@ -54,7 +54,7 @@ def main(args):
         initial_conditions,
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
-        fixed_samples=300000,
+        fixed_samples=30000,
         max_points=300000,
         val_split=0.1,
         batch_size=1024,
@@ -96,7 +96,7 @@ def main(args):
         clf_lambda=0.1,
         safe_level=10.0,
         controller_period=controller_period,
-        clf_relaxation_penalty=10.0,
+        clf_relaxation_penalty=100.0,
         primal_learning_rate=1e-3,
         initial_loss_weight=0.0,
     )
