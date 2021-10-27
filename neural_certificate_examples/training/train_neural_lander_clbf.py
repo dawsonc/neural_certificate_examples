@@ -98,7 +98,7 @@ def main(args):
         controller_period=controller_period,
         clf_relaxation_penalty=100.0,
         primal_learning_rate=1e-3,
-        initial_loss_weight=1.0,
+        initial_loss_weight=0.0,
     )
 
     # Initialize the logger and trainer
