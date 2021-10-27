@@ -54,7 +54,7 @@ def main(args):
         initial_conditions,
         trajectories_per_episode=0,  # Get all points from sampling, not trajectories
         trajectory_length=1,
-        fixed_samples=30000,
+        fixed_samples=10000,
         max_points=300000,
         val_split=0.1,
         batch_size=1024,
@@ -81,7 +81,7 @@ def main(args):
         plot_u_labels=[],
         scenarios=scenarios,
         n_sims_per_start=1,
-        t_sim=15.0,
+        t_sim=5.0,
     )
     experiment_suite = ExperimentSuite([V_contour_experiment, rollout_experiment])
 
@@ -98,7 +98,7 @@ def main(args):
         controller_period=controller_period,
         clf_relaxation_penalty=100.0,
         primal_learning_rate=1e-3,
-        initial_loss_weight=0.0,
+        initial_loss_weight=1.0,
     )
 
     # Initialize the logger and trainer

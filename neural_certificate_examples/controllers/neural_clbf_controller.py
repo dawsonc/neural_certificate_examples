@@ -11,8 +11,12 @@ import pytorch_lightning as pl
 from neural_certificate_examples.systems import ControlAffineSystem
 from neural_certificate_examples.systems.utils import ScenarioList
 from neural_certificate_examples.controllers.clf_controller import CLFController
-from neural_certificate_examples.controllers.controller_utils import normalize_with_angles
-from neural_certificate_examples.datamodules.episodic_datamodule import EpisodicDataModule
+from neural_certificate_examples.controllers.controller_utils import (
+    normalize_with_angles,
+)
+from neural_certificate_examples.datamodules.episodic_datamodule import (
+    EpisodicDataModule,
+)
 from neural_certificate_examples.experiments import ExperimentSuite
 
 
@@ -73,7 +77,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
                                      disable penalty scheduling (use constant penalty)
             num_init_epochs: the number of epochs to pretrain the controller on the
                              linear controller
-            initial_loss_weight: scaling for initial loss (used to imitate linear 
+            initial_loss_weight: scaling for initial loss (used to imitate linear
                                  lyapunov function)
         """
         super(NeuralCLBFController, self).__init__(
@@ -202,6 +206,22 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         JV = torch.bmm(V.unsqueeze(1), JV)
         V = 0.5 * (V * V).sum(dim=1)
 
+        # # Add linearized lypunov solution
+        # P = self.dynamics_model.P.type_as(x)
+        # P_eigs, _ = torch.linalg.eigh(P)
+        # P_eig_max = P_eigs.max()
+        # P = (
+        #     1
+        #     / P_eig_max
+        #     * P.reshape(1, self.dynamics_model.n_dims, self.dynamics_model.n_dims)
+        # )
+        # x_goal = self.dynamics_model.goal_point.type_as(x)
+        # V = V + 0.5 * F.bilinear(x - x_goal, x - x_goal, P).reshape(V.shape)
+        # P = P.reshape(self.dynamics_model.n_dims, self.dynamics_model.n_dims)
+        # JV = JV + F.linear(x - x_goal, P).reshape(
+        #     x.shape[0], 1, self.dynamics_model.n_dims
+        # )
+
         return V, JV
 
     def forward(self, x):
@@ -298,7 +318,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         # First figure out where this condition needs to hold
         eps = 1e-2
         V = self.V(x)
-        
+
         # Get the control input and relaxation from solving the QP, and aggregate
         # the relaxation across scenarios
         u_qp, qp_relaxation = self.solve_CLF_QP(x)
