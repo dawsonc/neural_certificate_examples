@@ -55,7 +55,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         epochs_per_episode: int = 5,
         penalty_scheduling_rate: float = 0.0,
         num_init_epochs: int = 5,
-        initial_loss_weight: float = 1.0,
     ):
         """Initialize the controller.
 
@@ -77,8 +76,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
                                      disable penalty scheduling (use constant penalty)
             num_init_epochs: the number of epochs to pretrain the controller on the
                              linear controller
-            initial_loss_weight: scaling for initial loss (used to imitate linear
-                                 lyapunov function)
         """
         super(NeuralCLBFController, self).__init__(
             dynamics_model=dynamics_model,
@@ -108,7 +105,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         self.epochs_per_episode = epochs_per_episode
         self.penalty_scheduling_rate = penalty_scheduling_rate
         self.num_init_epochs = num_init_epochs
-        self.initial_loss_weight = initial_loss_weight
 
         # Compute and save the center and range of the state variables
         x_max, x_min = dynamics_model.state_limits
@@ -245,7 +241,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         V = self.V(x)
 
         #   1.) CLBF should be minimized on the goal point
-        V_goal_pt = self.V(self.dynamics_model.goal_point.type_as(x)) ** 2
+        V_goal_pt = self.V(self.dynamics_model.goal_point.type_as(x))
         goal_term = V_goal_pt.mean()
         loss.append(("CLBF goal term", goal_term))
 
@@ -300,8 +296,9 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         #   3) Compute the CLBF decrease at each point by simulating
 
         # First figure out where this condition needs to hold
-        eps = 1e-2
+        eps = 0.1
         V = self.V(x)
+        condition_active = torch.sigmoid(10 * (self.safe_level + eps - V))
 
         # Get the control input and relaxation from solving the QP, and aggregate
         # the relaxation across scenarios
@@ -309,10 +306,11 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         qp_relaxation = torch.mean(qp_relaxation, dim=-1)
 
         # Minimize the qp relaxation to encourage satisfying the decrease condition
-        qp_relaxation_loss = qp_relaxation.mean()
+        qp_relaxation_loss = (qp_relaxation * condition_active).mean()
         loss.append(("QP relaxation", qp_relaxation_loss))
 
         # Now compute the decrease using linearization
+        eps = 1.0
         clbf_descent_term_lin = torch.tensor(0.0).type_as(x)
         clbf_descent_acc_lin = torch.tensor(0.0).type_as(x)
         # Get the current value of the CLBF and its Lie derivatives
@@ -325,6 +323,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
             )
             Vdot = Vdot.reshape(V.shape)
             violation = F.relu(eps + Vdot + self.clf_lambda * V)
+            violation *= condition_active
             clbf_descent_term_lin += violation.mean()
             clbf_descent_acc_lin += (violation <= eps).sum() / (
                 violation.nelement() * self.n_scenarios
@@ -335,6 +334,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
             loss.append(("CLBF descent accuracy (linearized)", clbf_descent_acc_lin))
 
         # Now compute the decrease using simulation
+        eps = 1.0
         clbf_descent_term_sim = torch.tensor(0.0).type_as(x)
         clbf_descent_acc_sim = torch.tensor(0.0).type_as(x)
         for s in self.scenarios:
@@ -342,8 +342,9 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
             x_next = x + self.dynamics_model.dt * xdot
             V_next = self.V(x_next)
             violation = F.relu(
-                eps + V_next - (1 - self.clf_lambda * self.dynamics_model.dt) * V
+                eps + (V_next - V) / self.controller_period + self.clf_lambda * V
             )
+            violation *= condition_active
 
             clbf_descent_term_sim += violation.mean()
             clbf_descent_acc_sim += (violation <= eps).sum() / (
@@ -364,7 +365,7 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         # The initial losses should decrease exponentially to zero, based on the epoch
         epoch_count = max(self.current_epoch - self.num_init_epochs, 0)
-        decrease_factor = self.initial_loss_weight * 0.8 ** epoch_count
+        decrease_factor = 0.8 ** epoch_count
 
         #   1.) Compare the CLBF to the nominal solution
         # Get the learned CLBF
@@ -383,22 +384,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         return loss
 
-    def lipschitz_loss(self) -> List[Tuple[str, torch.Tensor]]:
-        """
-        Compute the loss for Lipschitz regularization
-        """
-        loss = []
-
-        regularization_factor = 1e-3
-        # upper bound lipschitz constant
-        lipschitz = 1.0
-        for layer in self.V_nn:
-            if isinstance(layer, nn.Linear):
-                lipschitz = lipschitz * torch.linalg.matrix_norm(layer.weight)
-        loss.append(("Lipschitz regularization", regularization_factor * lipschitz))
-
-        return loss
-
     def training_step(self, batch, batch_idx):
         """Conduct the training step for the given batch"""
         # Extract the input and masks from the batch
@@ -406,12 +391,11 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         # Compute the losses
         component_losses = {}
-        # component_losses.update(self.initial_loss(x))
+        component_losses.update(self.initial_loss(x))
         component_losses.update(
             self.boundary_loss(x, goal_mask, safe_mask, unsafe_mask)
         )
         component_losses.update(self.descent_loss(x, goal_mask, safe_mask, unsafe_mask))
-        # component_losses.update(self.lipschitz_loss())
 
         # Compute the overall loss by summing up the individual losses
         total_loss = torch.tensor(0.0).type_as(x)
@@ -528,9 +512,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         self.experiment_suite.run_all_and_log_plots(
             self, self.logger, self.current_epoch
         )
-
-        # After every set of experiments, increase the relaxation penalty
-        self.clf_relaxation_penalty *= 2
 
     @pl.core.decorators.auto_move_data
     def simulator_fn(

@@ -1,7 +1,9 @@
 """Test some controller utilities"""
 import torch
 
-from neural_certificate_examples.controllers.controller_utils import normalize_with_angles
+from neural_certificate_examples.controllers.controller_utils import (
+    normalize_with_angles,
+)
 from neural_certificate_examples.systems.tests.mock_system import MockSystem
 
 

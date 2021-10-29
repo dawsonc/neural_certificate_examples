@@ -11,7 +11,10 @@ import tqdm
 from neural_certificate_examples.experiments import Experiment
 
 if TYPE_CHECKING:
-    from neural_certificate_examples.controllers import Controller, CLFController  # noqa
+    from neural_certificate_examples.controllers import (
+        Controller,
+        CLFController,
+    )  # noqa
 
 
 class CLFContourExperiment(Experiment):

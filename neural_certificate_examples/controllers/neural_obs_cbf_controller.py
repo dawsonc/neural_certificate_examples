@@ -9,7 +9,9 @@ import pytorch_lightning as pl
 
 from neural_certificate_examples.systems import ObservableSystem
 from neural_certificate_examples.controllers.controller import Controller
-from neural_certificate_examples.datamodules.episodic_datamodule import EpisodicDataModule
+from neural_certificate_examples.datamodules.episodic_datamodule import (
+    EpisodicDataModule,
+)
 from neural_certificate_examples.experiments import ExperimentSuite
 
 

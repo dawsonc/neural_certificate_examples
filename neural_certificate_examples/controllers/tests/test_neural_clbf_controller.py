@@ -4,12 +4,14 @@ import random
 
 from torch.autograd.functional import jacobian
 
-from neural_certificate_examples.controllers.neural_certificate_examples_controller import (
+from neural_certificate_examples.controllers.neural_clbf_controller import (
     NeuralCLBFController,
 )
 from neural_certificate_examples.experiments import ExperimentSuite
 from neural_certificate_examples.systems.tests.mock_system import MockSystem
-from neural_certificate_examples.datamodules.episodic_datamodule import EpisodicDataModule
+from neural_certificate_examples.datamodules.episodic_datamodule import (
+    EpisodicDataModule,
+)
 
 
 def test_init_neuralrclbfcontroller():

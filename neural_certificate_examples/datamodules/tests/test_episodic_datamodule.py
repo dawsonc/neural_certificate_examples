@@ -4,7 +4,9 @@ from typing import Dict
 
 import torch
 
-from neural_certificate_examples.datamodules.episodic_datamodule import EpisodicDataModule
+from neural_certificate_examples.datamodules.episodic_datamodule import (
+    EpisodicDataModule,
+)
 from neural_certificate_examples.systems.tests.mock_system import MockSystem
 
 

@@ -4,7 +4,9 @@ from typing import Optional
 
 import torch
 
-from neural_certificate_examples.systems.control_affine_system import ControlAffineSystem
+from neural_certificate_examples.systems.control_affine_system import (
+    ControlAffineSystem,
+)
 from neural_certificate_examples.systems.utils import (
     Scenario,
     ScenarioList,

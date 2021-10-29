@@ -1,7 +1,9 @@
 import pandas as pd
 
 from neural_certificate_examples.controllers import NeuralCLBFController
-from neural_certificate_examples.datamodules.episodic_datamodule import EpisodicDataModule
+from neural_certificate_examples.datamodules.episodic_datamodule import (
+    EpisodicDataModule,
+)
 from neural_certificate_examples.experiments import ExperimentSuite
 from neural_certificate_examples.experiments.tests.mock_experiment import MockExperiment
 from neural_certificate_examples.systems.tests.mock_system import MockSystem
