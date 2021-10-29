@@ -206,22 +206,6 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
         JV = torch.bmm(V.unsqueeze(1), JV)
         V = 0.5 * (V * V).sum(dim=1)
 
-        # Add linearized lypunov solution
-        P = self.dynamics_model.P.type_as(x)
-        P_eigs, _ = torch.linalg.eigh(P)
-        P_eig_max = P_eigs.max()
-        P = (
-            1
-            / P_eig_max
-            * P.reshape(1, self.dynamics_model.n_dims, self.dynamics_model.n_dims)
-        )
-        x_goal = self.dynamics_model.goal_point.type_as(x)
-        V = V + 0.5 * F.bilinear(x - x_goal, x - x_goal, P).reshape(V.shape)
-        P = P.reshape(self.dynamics_model.n_dims, self.dynamics_model.n_dims)
-        JV = JV + F.linear(x - x_goal, P).reshape(
-            x.shape[0], 1, self.dynamics_model.n_dims
-        )
-
         return V, JV
 
     def forward(self, x):
@@ -399,6 +383,22 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         return loss
 
+    def lipschitz_loss(self) -> List[Tuple[str, torch.Tensor]]:
+        """
+        Compute the loss for Lipschitz regularization
+        """
+        loss = []
+
+        regularization_factor = 1e-3
+        # upper bound lipschitz constant
+        lipschitz = 1.0
+        for layer in self.V_nn:
+            if isinstance(layer, nn.Linear):
+                lipschitz = lipschitz * torch.linalg.matrix_norm(layer.weight)
+        loss.append(("Lipschitz regularization", regularization_factor * lipschitz))
+
+        return loss
+
     def training_step(self, batch, batch_idx):
         """Conduct the training step for the given batch"""
         # Extract the input and masks from the batch
@@ -406,11 +406,12 @@ class NeuralCLBFController(pl.LightningModule, CLFController):
 
         # Compute the losses
         component_losses = {}
-        component_losses.update(self.initial_loss(x))
+        # component_losses.update(self.initial_loss(x))
         component_losses.update(
             self.boundary_loss(x, goal_mask, safe_mask, unsafe_mask)
         )
         component_losses.update(self.descent_loss(x, goal_mask, safe_mask, unsafe_mask))
+        # component_losses.update(self.lipschitz_loss())
 
         # Compute the overall loss by summing up the individual losses
         total_loss = torch.tensor(0.0).type_as(x)

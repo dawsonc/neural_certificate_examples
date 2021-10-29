@@ -142,7 +142,7 @@ class NeuralLander(ControlAffineSystem):
         limits for this system
         """
         # define upper and lower limits based around the nominal equilibrium input
-        upper_limit = torch.tensor([100, 100, 100])
+        upper_limit = torch.tensor([10.0, 10.0, 10.0])
         lower_limit = -1.0 * upper_limit
 
         return (upper_limit, lower_limit)
@@ -160,7 +160,7 @@ class NeuralLander(ControlAffineSystem):
         safe_radius = 3
         safe_mask = torch.logical_and(
             x[:, NeuralLander.PZ] >= safe_z,
-            x[:, : NeuralLander.PZ + 1].norm(dim=-1) <= safe_radius,
+            x.norm(dim=-1) <= safe_radius,
         )
 
         return safe_mask
@@ -178,7 +178,7 @@ class NeuralLander(ControlAffineSystem):
         unsafe_radius = 3.5
         unsafe_mask = torch.logical_or(
             x[:, NeuralLander.PZ] <= unsafe_z,
-            x[:, : NeuralLander.PZ + 1].norm(dim=-1) >= unsafe_radius,
+            x.norm(dim=-1) >= unsafe_radius,
         )
 
         return unsafe_mask
@@ -291,3 +291,18 @@ class NeuralLander(ControlAffineSystem):
         u_eq = torch.zeros((1, self.n_controls))
         u_eq[0, NeuralLander.AZ] = NeuralLander.mass * grav
         return u_eq
+
+    def u_nominal(self, x: torch.Tensor) -> torch.Tensor:
+        """
+        Compute the nominal control for the nominal parameters, using LQR unless
+        overridden
+
+        args:
+            x: bs x self.n_dims tensor of state
+        returns:
+            u_nominal: bs x self.n_controls tensor of controls
+        """
+        # Return a zero control signal
+        u = torch.zeros(x.shape[0], self.n_controls).type_as(x)
+
+        return  u

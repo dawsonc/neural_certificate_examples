@@ -6,7 +6,7 @@ import pytorch_lightning as pl
 from pytorch_lightning import loggers as pl_loggers
 import numpy as np
 
-from neural_certificate_examples.controllers import NeuralCLBFController
+from neural_certificate_examples.controllers import NeuralCLFController
 from neural_certificate_examples.datamodules.episodic_datamodule import (
     EpisodicDataModule,
 )
@@ -29,7 +29,7 @@ start_x = torch.tensor(
         [0.0, 0.0, 0.5, 0.0, 0.0, 0.0],
     ]
 )
-simulation_dt = 0.001
+simulation_dt = 0.01
 
 
 def main(args):
@@ -75,10 +75,10 @@ def main(args):
     rollout_experiment = RolloutTimeSeriesExperiment(
         "Rollout",
         start_x,
-        plot_x_indices=[NeuralLander.PZ, NeuralLander.VZ],
-        plot_x_labels=["$z$", "$\\dot{z}$"],
-        plot_u_indices=[],
-        plot_u_labels=[],
+        plot_x_indices=[NeuralLander.PX, NeuralLander.VX, NeuralLander.PY, NeuralLander.VY, NeuralLander.PZ, NeuralLander.VZ],
+        plot_x_labels=["$x$", "$\\dot{x}$", "$y$", "$\\dot{y}$", "$z$", "$\\dot{z}$"],
+        plot_u_indices=[NeuralLander.AX, NeuralLander.AZ, NeuralLander.AZ],
+        plot_u_labels=["ux", "uy", "uz"],
         scenarios=scenarios,
         n_sims_per_start=1,
         t_sim=5.0,
@@ -86,19 +86,17 @@ def main(args):
     experiment_suite = ExperimentSuite([V_contour_experiment, rollout_experiment])
 
     # Initialize the controller
-    clbf_controller = NeuralCLBFController(
+    clf_controller = NeuralCLFController(
         dynamics_model,
         scenarios,
         data_module,
         experiment_suite=experiment_suite,
-        clbf_hidden_layers=1,
-        clbf_hidden_size=48,
+        clf_hidden_layers=1,
+        clf_hidden_size=48,
         clf_lambda=0.1,
-        safe_level=10.0,
         controller_period=controller_period,
-        clf_relaxation_penalty=100.0,
-        primal_learning_rate=1e-3,
-        initial_loss_weight=0.0,
+        clf_relaxation_penalty=1e5,
+        primal_learning_rate=1e-2,
     )
 
     # Initialize the logger and trainer
@@ -112,7 +110,7 @@ def main(args):
 
     # Train
     torch.autograd.set_detect_anomaly(True)
-    trainer.fit(clbf_controller)
+    trainer.fit(clf_controller)
 
 
 if __name__ == "__main__":

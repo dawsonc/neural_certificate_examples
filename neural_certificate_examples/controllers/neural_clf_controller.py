@@ -239,7 +239,7 @@ class NeuralCLFController(pl.LightningModule, CLFController):
             psd_V_acc = (psd_violation <= eps).sum() / psd_violation.nelement()
             loss.append(("CLF PSD accuracy", psd_V_acc))
 
-        #   3.) V > x^T P x in the unsafe region
+        #   3.) V > x^T P x
         P = self.dynamics_model.P.type_as(x)
         P = torch.eye(self.dynamics_model.n_dims)
         P = P.reshape(1, self.dynamics_model.n_dims, self.dynamics_model.n_dims)
